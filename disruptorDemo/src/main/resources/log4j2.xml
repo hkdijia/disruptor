@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Configuration后面的status，这个用于设置log4j2自身内部的信息输出，可以不设置，当设置成trace时，
+ 你会看到log4j2内部各种详细输出。可以设置成OFF(关闭)或Error(只输出错误信息)
+-->
+<Configuration status="INFO" monitorInterval="60">
+    <!--先定义所有的appender -->
+    <Appenders>
+        <!--这个输出控制台的配置 -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <!--             控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch） -->
+            <ThresholdFilter level="trace" onMatch="ACCEPT" onMismatch="DENY"/>
+            <!--             这个都知道是输出日志的格式 -->
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %class{36} %L %M - %msg%xEx%n"/>
+        </Console>
+
+        <!--添加过滤器ThresholdFilter,可以有选择的输出某个级别以上的类别  onMatch="ACCEPT" onMismatch="DENY"意思是匹配就接受,否则直接拒绝  -->
+        <File name="ERROR_FILE" fileName="./logs/error.log">
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="%d{yyyy.MM.dd 'at' HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n"/>
+        </File>
+
+        <File name="WARN_FILE" fileName="./logs/warn.log">
+            <ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="NEUTRAL"/>
+            <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="%d{yyyy.MM.dd 'at' HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n"/>
+        </File>
+
+        <!--这个会打印出所有的信息，每次大小超过size，则这size大小的日志会自动存入按年份-月份建立的文件夹下面并进行压缩，作为存档 -->
+        <RollingFile name="INFO_RollingFile" fileName="./logs/info.log"
+                     filePattern="logs/$${date:yyyy-MM}/info-%d{MM-dd-yyyy}-%i.log.gz">
+            <ThresholdFilter level="WARN" onMatch="DENY" onMismatch="NEUTRAL"/>
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+            <PatternLayout pattern="%d{yyyy-MM-dd 'at' HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n"/>
+            <SizeBasedTriggeringPolicy size="2MB"/>
+        </RollingFile>
+
+        <!--文件会打印出所有信息，这个log每次运行程序会自动清空，由append属性决定，这个也挺有用的，适合临时测试用 -->
+        <!--append为TRUE表示消息增加到指定文件中，false表示消息覆盖指定的文件内容，默认值是true -->
+        <File name="DEBUG_FILE" fileName="./logs/debug.log" append="false">
+            <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %class{36} %L %M - %msg%xEx%n"/>
+        </File>
+    </Appenders>
+
+
+    <!--然后定义logger，只有定义了logger并引入的appender，appender才会生效 -->
+    <Loggers>
+        <!-- additivity：是否继承父节点的配置 -->
+<!--        <Logger name="com.gotkx.counter.service" level="DEBUG" />-->
+        <!-- includeLocation：是否显示文件行数，若为异步模式，开启此项会造成性能问题 -->
+        <Root level="DEBUG" includeLocation="true">
+            <Appender-ref ref="Console"/>
+            <Appender-ref ref="DEBUG_FILE" level="DEBUG"/>
+            <Appender-ref ref="INFO_RollingFile" level="INFO"/>
+            <Appender-ref ref="WARN_FILE" level="WARN"/>
+            <Appender-ref ref="ERROR_FILE" level="ERROR"/>
+        </Root>
+    </Loggers>
+</Configuration>
